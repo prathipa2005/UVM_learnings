@@ -1,48 +1,52 @@
 class mux_monitor extends uvm_monitor;
 
-   `uvm_component_utils(mux_monitor)
+    `uvm_component_utils(mux_monitor)
 
-   virtual mux_if vif;
+    virtual mux_if vif;
 
-   uvm_analysis_port #(mux_transaction) mon_ap;
+    mux_transaction tr;
 
-   function new(string name,
-                uvm_component parent);
+    uvm_analysis_port #(mux_transaction) mon_ap;
 
-      super.new(name,parent);
+    function new(string name,
+                 uvm_component parent);
 
-      mon_ap = new("mon_ap", this);
+        super.new(name,parent);
 
-   endfunction
+        mon_ap = new("mon_ap",this);
 
-   function void build_phase(uvm_phase phase);
+    endfunction
 
-      super.build_phase(phase);
 
-      if(!uvm_config_db #(virtual mux_if)::get(this,"","vif",vif))
-         `uvm_fatal("MON","Virtual Interface not found")
+    function void build_phase(uvm_phase phase);
 
-   endfunction
+        super.build_phase(phase);
 
-   task run_phase(uvm_phase phase);
+        if(!uvm_config_db #(virtual mux_if)::get(this,"","vif",vif))
+            `uvm_fatal("MON","Unable to access Interface")
 
-      mux_transaction tr;
+    endfunction
 
-      forever begin
 
-         tr = mux_transaction::type_id::create("tr");
+    task run_phase(uvm_phase phase);
 
-         #1;
+        forever
 
-         tr.a = vif.a;
-         tr.b = vif.b;
-         tr.sel = vif.sel;
-         tr.actual_y = vif.y;
+        begin
 
-         mon_ap.write(tr);
+            @(posedge vif.clk);
 
-      end
+            tr = mux_transaction::type_id::create("tr");
 
-   endtask
+            tr.a = vif.a;
+            tr.b = vif.b;
+            tr.sel = vif.sel;
+            tr.actual_y = vif.y;
+
+            mon_ap.write(tr);
+
+        end
+
+    endtask
 
 endclass
